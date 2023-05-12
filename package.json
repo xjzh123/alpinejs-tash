@@ -20,5 +20,8 @@
   },
   "devDependencies": {
     "esbuild": "^0.17.11"
+  },
+  "dependencies": {
+    "html-entities": "^2.3.3"
   }
 }

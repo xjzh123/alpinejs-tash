@@ -13,7 +13,7 @@ buildPlugin({
 function buildPlugin(buildOptions) {
   return require('esbuild').buildSync({
     ...buildOptions,
-    minify: true,
+    // minify: true,
     bundle: true,
   })
 }

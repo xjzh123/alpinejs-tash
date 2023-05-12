@@ -1,36 +1,48 @@
+// import * as htmlEntities from "html-entities"
+
+/**
+ * 
+ * @param {Node} node 
+ * @param {Function} func 
+ */
+function walkTextNodes(node, func) {
+  function walk(node) {
+    if (node.hasChildNodes() && !['style', 'script'].includes(node.nodeName)) {
+      if (node.childNodes.length === 1 && node.childNodes[0].nodeType === 3) {
+        func(node)
+      } else {
+        console.log(node)
+        node.childNodes.forEach(walk)
+      }
+    }
+  }
+  walk(node)
+}
+
 export default function (Alpine) {
   Alpine.directive(
     'tash',
     (el, { modifiers, expression }, { evaluate, effect }) => {
-      const expressionFinder = (expression) =>
-        new RegExp(`${leftDelimiter}${expression}${rightDelimiter}`, 'g')
 
       const useVue = modifiers.includes('vue')
       const useAngular = modifiers.includes('angular')
-      const leftDelimiter = useVue ? '{{ ' : useAngular ? '{{' : '{'
-      const rightDelimiter = useVue ? ' }}' : useAngular ? '}}' : '}'
 
-      const expressionArray = expression
-        .split(',')
-        .map((expressionItem) => expressionItem.trim())
+      /* pomsky
+let bracketed = "(" Codepoint* lazy ")" ;
+let not_bracketed = Codepoint* lazy ;
 
-      const htmlReference = document.createElement('template')
+let expression = ( bracketed | not_bracketed )* lazy ;
 
-      htmlReference.innerHTML = el.innerHTML
+"{" :(expression) "}"
+      */
 
-      let componentHtml = `${htmlReference.innerHTML}`
+      const finderRegex = useVue ? /\{\{ ((?:\([\s\S]*?\)|[\s\S]*?)*?) \}\}/g :
+        useAngular ? /\{\{((?:\([\s\S]*?\)|[\s\S]*?)*?)\}\}/g : /\{((?:\([\s\S]*?\)|[\s\S]*?)*?)\}/g
 
       effect(() => {
-        expressionArray.forEach((expression) => {
-          const evaluatedValue = evaluate(expression)
-          const finderRegex = expressionFinder(expression)
-
-          componentHtml = componentHtml.replace(finderRegex, evaluatedValue)
+        walkTextNodes(el, (textNode) => {
+          textNode.textContent = textNode.textContent.replace(finderRegex, (substring, expression) => evaluate(expression))
         })
-
-        el.innerHTML = componentHtml
-
-        componentHtml = htmlReference.innerHTML
       })
     }
   )
